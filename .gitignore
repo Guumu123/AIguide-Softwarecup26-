@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# VS Code
+.vscode/
+
+# Project specific
+知识库/20260323113204906 (1).zip
+*.log
+node_modules/
+dist/
+build/
+.history/
+
+# Local data that shouldn't be shared
+*.db
+*.sqlite3
