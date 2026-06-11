@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/chat_provider.dart';
 
-class ChatView extends StatelessWidget {
+class ChatView extends StatefulWidget {
   const ChatView({super.key});
+
+  @override
+  State<ChatView> createState() => _ChatViewState();
+}
+
+class _ChatViewState extends State<ChatView> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +74,8 @@ class ChatView extends StatelessWidget {
   }
 
   Widget _buildInputSection(BuildContext context) {
-    final provider = Provider.of<ChatProvider>(context, listen: false);
-    final controller = TextEditingController();
+    final provider = context.read<ChatProvider>();
+    final isListening = context.select<ChatProvider, bool>((p) => p.isListening);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -78,7 +92,7 @@ class ChatView extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
-              controller: controller,
+              controller: _controller,
               decoration: const InputDecoration(
                 hintText: '输入问题...',
                 border: OutlineInputBorder(),
@@ -86,28 +100,32 @@ class ChatView extends StatelessWidget {
               onSubmitted: (val) {
                 if (val.isNotEmpty) {
                   provider.sendMessage(val);
-                  controller.clear();
+                  _controller.clear();
                 }
               },
             ),
           ),
           const SizedBox(width: 8),
-          Consumer<ChatProvider>(
-            builder: (context, provider, child) {
-              return GestureDetector(
-                onLongPressStart: (_) => provider.startListening(),
-                onLongPressEnd: (_) => provider.stopListening(),
-                child: CircleAvatar(
-                  backgroundColor: provider.isListening ? Colors.red : Colors.blue,
-                  child: Icon(
-                    provider.isListening ? Icons.mic : Icons.mic_none,
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            },
-          ),
+          _buildMicButton(context, provider, isListening),
         ],
+      ),
+    );
+  }
+
+  // 分离麦克风按钮避免整个 input section 重建
+  Widget _buildMicButton(BuildContext context, ChatProvider provider, bool isListening) {
+    // Web 端隐藏语音按钮
+    if (kIsWeb) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onLongPressStart: (_) => provider.startListening(),
+      onLongPressEnd: (_) => provider.stopListening(),
+      child: CircleAvatar(
+        backgroundColor: isListening ? Colors.red : Colors.blue,
+        child: Icon(
+          isListening ? Icons.mic : Icons.mic_none,
+          color: Colors.white,
+        ),
       ),
     );
   }
